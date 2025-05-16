@@ -2,6 +2,7 @@ const cron = require("node-cron");
 const axios = require("axios");
 const xml2js = require("xml2js");
 const { News } = require("../models/News");
+const { Comments } = require("../models/Comment");
 const {
   extractImageFromHTML,
   cleanText,
@@ -9,8 +10,6 @@ const {
 } = require("../helpers/extractImageUrl");
 const slugify = require("slugify");
 const { RSS_FIELDS } = require("../data/rssFeeds");
-const { parseISO, isValid } = require("date-fns");
-const { parseRssDate } = require("../helpers/dateHandlers");
 
 async function fetchAndUpdateDB(rssFeeds, key) {
   let errors = [];
@@ -414,8 +413,7 @@ const fetchAndUpdateBbNaijaNews = async () => {
   await fetchAndUpdateDB(BB_NAIJA_RSS_FEEDS, "bb-naija");
 };
 
-// Run every hour
-cron.schedule("0 * * * *", async () => {
+cron.schedule("*/30 * * * *", async () => {
   try {
     await fetchAndUpdateLatestNewsFromRss();
     await fetchAndUpdateEntertainmentNewsFromRss();
@@ -449,10 +447,17 @@ cron.schedule("0 * * * *", async () => {
   }
 });
 
-// Optional: Clean up old entries daily at midnight
 cron.schedule("0 0 * * *", async () => {
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  await News.deleteMany({ publishedAt: { $lt: cutoff } });
+
+  const oldNews = await News.find({ publishedAt: { $lt: cutoff } }, "_id");
+  const oldNewsIds = oldNews.map((n) => n._id);
+
+  await News.deleteMany({ _id: { $in: oldNewsIds } });
+
+  await Comments.deleteMany({ newsId: { $in: oldNewsIds } });
+
+  console.log("Deleted old news and related comments");
 });
 
 module.exports = {
