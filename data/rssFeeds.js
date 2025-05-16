@@ -4,7 +4,7 @@ const RSS_FIELDS = {
     source: "reuters",
     url: "https://www.reutersagency.com/feed/?best-topics=top-news",
   },
-  PUNCH: { source: "punch", url: "https://punchng.com/feed/" },
+  PUNCH: { source: "punch", url: "https://rss.app/feeds/yqOoZN9fKWFuTaY8.xml" },
   GUARDIAN: { source: "guardian", url: "https://guardian.ng/feed/" },
   VANGUARD: { source: "vanguard", url: "https://www.vanguardngr.com/feed/" },
   DAILY_TRUST: { source: "dailytrust", url: "https://dailytrust.com/feed/" },

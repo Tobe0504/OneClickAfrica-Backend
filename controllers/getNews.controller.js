@@ -129,7 +129,7 @@ const getGeneralPoliticsNews = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    const newsData = await News.find({ category: "general_politics" })
+    const newsData = await News.find({ category: "general-politics" })
       .sort({ publishedAt: -1 })
       .skip(skip)
       .limit(limit);

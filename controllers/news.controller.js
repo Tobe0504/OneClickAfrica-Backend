@@ -413,7 +413,7 @@ const fetchAndUpdateBbNaijaNews = async () => {
   await fetchAndUpdateDB(BB_NAIJA_RSS_FEEDS, "bb-naija");
 };
 
-cron.schedule("*/30 * * * *", async () => {
+cron.schedule("*/20 * * * *", async () => {
   try {
     await fetchAndUpdateLatestNewsFromRss();
     await fetchAndUpdateEntertainmentNewsFromRss();
