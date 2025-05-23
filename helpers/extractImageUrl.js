@@ -9,7 +9,12 @@ const cleanText = (html) => {
 };
 
 function extractYouTubeID(url) {
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
+  if (!url) return null;
+
+  const regex =
+    /(?:youtube\.com\/.*v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regex);
+
   return match ? match[1] : null;
 }
 

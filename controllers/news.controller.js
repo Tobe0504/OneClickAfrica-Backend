@@ -10,20 +10,27 @@ const {
 } = require("../helpers/extractImageUrl");
 const slugify = require("slugify");
 const { RSS_FIELDS } = require("../data/rssFeeds");
+const Parser = require("rss-parser");
+const parser = new Parser();
 
-async function fetchAndUpdateDB(rssFeeds, key) {
+async function fetchAndUpdateDB(rssFeeds, key, isYoutube = false) {
   let errors = [];
   let totalArticles = 0;
   let newArticles = 0;
 
   for (const feed of rssFeeds) {
     try {
-      console.log(`Fetching ${feed.source}...`);
-      const response = await axios.get(feed.url, { timeout: 10000 });
-      const data = await xml2js.parseStringPromise(response.data, {
-        mergeAttrs: true,
-      });
-      const items = data.rss.channel[0].item || [];
+      console.log(`Fetching ${feed.source}...`, isYoutube);
+      const response = !isYoutube
+        ? await axios.get(feed.url, { timeout: 10000 })
+        : await parser.parseURL(feed.url);
+      const data = isYoutube
+        ? response
+        : await xml2js.parseStringPromise(response.data, {
+            mergeAttrs: true,
+          });
+
+      const items = isYoutube ? data?.items : data?.rss?.channel[0].item || [];
 
       for (const item of items) {
         try {
@@ -38,14 +45,15 @@ async function fetchAndUpdateDB(rssFeeds, key) {
 
           const image = Array.isArray(rawImage) ? rawImage[0] : rawImage;
 
-          const author =
-            item.author?.[0] ||
-            item["dc:creator"]?.[0] ||
-            item.creator?.[0] ||
-            null;
+          const author = !isYoutube
+            ? item.author?.[0] ||
+              item["dc:creator"]?.[0] ||
+              item.creator?.[0] ||
+              null
+            : item?.author;
 
           let publishedAt;
-          const pubDateStr = item.pubDate?.[0];
+          const pubDateStr = item.pubDate?.[0] || item?.isoDate;
           if (pubDateStr) {
             const parsed = new Date(pubDateStr);
             publishedAt = isNaN(parsed.getTime()) ? new Date() : parsed;
@@ -53,28 +61,36 @@ async function fetchAndUpdateDB(rssFeeds, key) {
             publishedAt = new Date();
           }
 
-          const videoUrl = item.link?.[0] || null;
+          const videoUrl = !isYoutube ? item.link?.[0] || null : item?.link;
           const videoId = videoUrl ? extractYouTubeID(videoUrl) : null;
           const embedUrl = videoId
             ? `https://www.youtube.com/embed/${videoId}`
             : null;
 
           const standardized = {
-            title: item.title?.[0] || "No title",
-            description: cleanText(item.description?.[0]) || "",
-            url: item.link?.[0] || "No URL",
-            source: feed.source,
+            title: !isYoutube ? item.title?.[0] || "No title" : item?.title,
+            description: !isYoutube
+              ? cleanText(item.description?.[0]) || ""
+              : "",
+            url: !isYoutube ? item.link?.[0] || "No URL" : item?.link,
+            source: !isYoutube ? feed.source : item?.author,
             publishedAt: publishedAt.toISOString(),
             category: key,
             image,
             author,
-            slug:
-              slugify(item.title?.[0] || "untitled", {
-                lower: true,
-                strict: true,
-              }) +
-              "-" +
-              Date.now(),
+            slug: !isYoutube
+              ? slugify(item.title?.[0] || "untitled", {
+                  lower: true,
+                  strict: true,
+                }) +
+                "-" +
+                Date.now()
+              : slugify(item.title || "untitled", {
+                  lower: true,
+                  strict: true,
+                }) +
+                "-" +
+                Date.now(),
             video: embedUrl,
           };
 
@@ -216,10 +232,11 @@ const fetchAndUpdateAfricanEconomyNewsFromRss = async () => {
 const TRENDING_NEWS_VIDEO_RSS_FEEDS = [
   RSS_FIELDS.BBC_VIDEO,
   RSS_FIELDS.ARISE_VIDEO,
+  RSS_FIELDS.CHANNELS_VIDEO,
 ];
 
 const fetchAndUpdateVideoNewsFromRss = async () => {
-  await fetchAndUpdateDB(TRENDING_NEWS_VIDEO_RSS_FEEDS, "video");
+  await fetchAndUpdateDB(TRENDING_NEWS_VIDEO_RSS_FEEDS, "video", true);
 };
 
 const POLITICS_NEWS_VIDEO_RSS_FEEDS = [

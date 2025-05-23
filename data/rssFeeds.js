@@ -240,12 +240,17 @@ const RSS_FIELDS = {
 
   BBC_VIDEO: {
     source: "BBC News Video",
-    url: "https://rss.app/feeds/MIf022p5tmEeApkF.xml",
+    url: "https://www.youtube.com/feeds/videos.xml?channel_id=UC16niRr50-MSBwiO3YDb3RA",
+  },
+
+  CHANNELS_VIDEO: {
+    source: "Channels Video",
+    url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCEXGDNclvmg6RW0vipJYsTQ",
   },
 
   ARISE_VIDEO: {
     source: "Arise Video",
-    url: "https://rss.app/feeds/YEZ1dorFPfUx5CYP.xml",
+    url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCyEJX-kSj0kOOCS7Qlq2G7g",
   },
   PUNCH_POLITICS: {
     source: "Punch",
